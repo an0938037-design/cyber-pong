@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Retro Cyberpunk Pong - Vertical Mode</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #05050c;
+            overflow-x: hidden;
+            touch-action: none; /* Ngăn chặn cuộn màn hình hoặc zoom trên thiết bị di động */
+        }
+        .neon-font {
+            font-family: 'Orbitron', sans-serif;
+        }
+        .neon-border {
+            box-shadow: 0 0 15px rgba(236, 72, 153, 0.5), inset 0 0 15px rgba(236, 72, 153, 0.3);
+            border: 2px solid rgba(236, 72, 153, 0.8);
+        }
+        .neon-border-blue {
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.5), inset 0 0 15px rgba(59, 130, 246, 0.3);
+            border: 2px solid rgba(59, 130, 246, 0.8);
+        }
+        .neon-glow-pink {
+            text-shadow: 0 0 8px rgba(236, 72, 153, 0.8), 0 0 20px rgba(236, 72, 153, 0.5);
+        }
+        .neon-glow-blue {
+            text-shadow: 0 0 8px rgba(59, 130, 246, 0.8), 0 0 20px rgba(59, 130, 246, 0.5);
+        }
+        .neon-btn {
+            transition: all 0.2s ease-in-out;
+        }
+        .neon-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px var(--tw-shadow-color);
+        }
+        /* Thanh cuộn tùy chỉnh */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.8);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(236, 72, 153, 0.5);
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(236, 72, 153, 0.8);
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen text-slate-100 p-2 md:p-4 select-none">
+
+    <!-- Background grid decoration -->
+    <div class="fixed inset-0 bg-[linear-gradient(to_right,#1f2937_1px,transparent_1px),linear-gradient(to_bottom,#1f2937_1px,transparent_1px)] bg-[size:3rem_3rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-25 pointer-events-none z-0"></div>
+
+    <div class="w-full max-w-5xl z-10 flex flex-col gap-4">
+        <!-- Header bar -->
+        <header class="flex justify-between items-center bg-slate-950/80 backdrop-blur-md p-4 rounded-2xl border border-slate-800 shadow-2xl">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-pink-500/20 border border-pink-500 flex items-center justify-center text-pink-500 shadow-[0_0_15px_rgba(236,72,153,0.4)] animate-pulse">
+                    <i class="fa-solid fa-table-tennis-paddle-ball text-lg rotate-90"></i>
+                </div>
+                <div>
+                    <h1 class="neon-font font-black text-xl md:text-2xl tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 neon-glow-pink">CYBER PONG</h1>
+                    <p class="text-[10px] md:text-xs text-slate-400 font-semibold uppercase tracking-wider">Đấu trường Neon dọc thế hệ mới</p>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <button id="soundBtn" class="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 hover:border-pink-500/50 flex items-center justify-center transition-colors text-slate-300 hover:text-pink-400">
+                    <i class="fa-solid fa-volume-high" id="soundIcon"></i>
+                </button>
+                <button id="helpBtn" class="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 hover:border-blue-500/50 flex items-center justify-center transition-colors text-slate-300 hover:text-blue-400">
+                    <i class="fa-solid fa-circle-question"></i>
+                </button>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 items-stretch">
+            
+            <!-- Sidebar Controls -->
+            <div class="lg:col-span-1 bg-slate-950/80 backdrop-blur-md p-4 rounded-2xl border border-slate-800 flex flex-col justify-between gap-4 shadow-2xl">
+                <!-- Modes & Settings -->
+                <div class="flex flex-col gap-4">
+                    <div>
+                        <label class="text-xs font-semibold uppercase tracking-wider text-slate-400 block mb-2">Chế Độ Chơi</label>
+                        <div class="grid grid-cols-2 lg:grid-cols-1 gap-2">
+                            <button id="modeSingle" class="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-pink-500/50 bg-pink-500/10 text-pink-400 font-medium text-sm transition-all shadow-[0_0_10px_rgba(236,72,153,0.1)] justify-center lg:justify-start">
+                                <i class="fa-solid fa-robot"></i> Đấu với Máy
+                            </button>
+                            <button id="modeDouble" class="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-slate-800 bg-slate-900 hover:bg-slate-900/50 text-slate-400 font-medium text-sm transition-all justify-center lg:justify-start">
+                                <i class="fa-solid fa-user-friends"></i> 2 Người Chơi
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="difficultySection">
+                        <label class="text-xs font-semibold uppercase tracking-wider text-slate-400 block mb-2">Độ Khó AI</label>
+                        <div class="grid grid-cols-2 gap-1.5">
+                            <button class="diff-btn px-2 py-2 rounded-lg text-xs font-semibold border border-slate-800 bg-slate-900 text-slate-400 transition-all" data-diff="easy">Dễ</button>
+                            <button class="diff-btn px-2 py-2 rounded-lg text-xs font-semibold border border-blue-500/50 bg-blue-500/10 text-blue-400 transition-all" data-diff="medium">Vừa</button>
+                            <button class="diff-btn px-2 py-2 rounded-lg text-xs font-semibold border border-slate-800 bg-slate-900 text-slate-400 transition-all" data-diff="hard">Khó</button>
+                            <button class="diff-btn px-2 py-2 rounded-lg text-xs font-semibold border border-slate-800 bg-slate-900 text-slate-400 transition-all" data-diff="extreme">Vô Địch</button>
+                            <button class="diff-btn px-2 py-2 rounded-lg text-xs font-semibold border border-slate-800 bg-slate-900 text-slate-400 transition-all" data-diff="hell">Địa Ngục</button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="text-xs font-semibold uppercase tracking-wider text-slate-400 block mb-2">Hiệu Ứng Trận Đấu</label>
+                        <div class="flex items-center justify-between p-2 rounded-xl border border-slate-800 bg-slate-900/50 text-xs">
+                            <span class="text-slate-300">Siêu Tốc Độ (Tăng dần)</span>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="speedUpCheck" class="sr-only peer" checked>
+                                <div class="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-300 after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-pink-600"></div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Button -->
+                <div class="flex flex-col gap-2 mt-2">
+                    <button id="startBtn" class="neon-btn w-full py-3 px-4 rounded-xl bg-gradient-to-r from-pink-500 to-purple-600 text-white font-bold neon-font tracking-wide uppercase shadow-[0_0_15px_rgba(236,72,153,0.3)] shadow-pink-500/30 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-play"></i> BẮT ĐẦU CHƠI
+                    </button>
+                    <button id="resetScoreBtn" class="w-full py-2 px-4 rounded-xl bg-slate-900 hover:bg-slate-900/70 border border-slate-800 text-slate-400 hover:text-slate-200 text-xs font-bold transition-all flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-rotate-right"></i>Đặt lại Điểm số
+                    </button>
+                </div>
+            </div>
+
+            <!-- Game Canvas Container -->
+            <div class="lg:col-span-3 bg-slate-950/80 backdrop-blur-md p-3 rounded-2xl border border-slate-800 shadow-2xl flex flex-col items-center justify-center relative min-h-[550px] md:min-h-[720px]">
+                
+                <!-- Match Score overlay inside canvas container for neatness -->
+                <div class="absolute top-4 left-0 right-0 flex justify-between px-12 pointer-events-none z-10">
+                    <div class="flex flex-col items-center">
+                        <span class="text-[10px] font-bold text-pink-400 tracking-wider uppercase mb-1" id="p1Label">Người chơi (Dưới)</span>
+                        <div class="neon-font text-3xl md:text-4xl font-extrabold text-pink-500 neon-glow-pink" id="p1Score">0</div>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <span class="text-[10px] font-bold text-blue-400 tracking-wider uppercase mb-1" id="p2Label">Máy AI (Trên)</span>
+                        <div class="neon-font text-3xl md:text-4xl font-extrabold text-blue-500 neon-glow-blue" id="p2Score">0</div>
+                    </div>
+                </div>
+
+                <!-- Canvas Wrapper -->
+                <div class="relative w-full h-full flex items-center justify-center overflow-hidden rounded-xl bg-slate-950 border border-slate-900">
+                    <canvas id="gameCanvas" class="block rounded-xl"></canvas>
+                    
+                    <!-- Game Over / Pause Overlay Screen -->
+                    <div id="gameOverlay" class="absolute inset-0 bg-slate-950/95 backdrop-blur-sm flex flex-col items-center justify-center text-center p-6 transition-all duration-300 z-20">
+                        <h2 id="overlayTitle" class="neon-font font-black text-3xl md:text-4xl tracking-widest text-pink-500 neon-glow-pink mb-2">CYBER PONG</h2>
+                        <p id="overlayMessage" class="text-sm md:text-base text-slate-300 max-w-sm mb-6">Trượt ngang để đón và nện bóng! Chọn chế độ chơi để bắt đầu đấu ngay.</p>
+                        
+                        <button id="overlayPlayBtn" class="neon-btn px-6 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-pink-500 text-white font-bold neon-font tracking-widest text-sm shadow-[0_0_20px_rgba(236,72,153,0.3)] flex items-center gap-2">
+                            <i class="fa-solid fa-gamepad"></i> VÀO TRẬN NGAY
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Mobile controls visual cues -->
+                <div class="w-full flex justify-between mt-2 px-2 text-[10px] text-slate-500 font-semibold uppercase tracking-widest pointer-events-none md:hidden">
+                    <div><i class="fa-solid fa-arrow-left-right"></i> Trượt đáy màn hình để đỡ</div>
+                    <div id="mobileP2Hint" class="hidden"><i class="fa-solid fa-arrow-left-right"></i> Trượt đỉnh để đỡ (P2)</div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Controls Guide Modal -->
+        <div id="helpModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm items-center justify-center p-4 z-50 hidden">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 relative">
+                <button id="closeHelpBtn" class="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+                <h3 class="neon-font font-bold text-xl text-pink-500 mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-keyboard"></i> HƯỚNG DẪN ĐIỀU KHIỂN
+                </h3>
+                
+                <div class="space-y-4 text-sm text-slate-300">
+                    <div class="p-3 bg-slate-950/50 rounded-xl border border-slate-800">
+                        <h4 class="font-bold text-pink-400 mb-2 flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-pink-500"></span> NGƯỜI CHƠI 1 (BÀN ĐỠ PHÍA DƯỚI)
+                        </h4>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <span>Bàn phím:</span>
+                            <span class="bg-slate-800 border border-slate-700 px-2 py-0.5 rounded text-xs font-mono font-semibold">Mũi tên TRÁI (<i class="fa-solid fa-arrow-left"></i>) / PHẢI (<i class="fa-solid fa-arrow-right"></i>)</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span>Điện thoại:</span>
+                            <span class="text-xs text-slate-400">Chạm & trượt tay qua lại ở vùng nửa dưới màn hình</span>
+                        </div>
+                    </div>
+
+                    <div class="p-3 bg-slate-950/50 rounded-xl border border-slate-800">
+                        <h4 class="font-bold text-blue-400 mb-2 flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-blue-500"></span> NGƯỜI CHƠI 2 (BÀN ĐỠ PHÍA TRÊN)
+                        </h4>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <span>Bàn phím:</span>
+                            <span class="bg-slate-800 border border-slate-700 px-2 py-0.5 rounded text-xs font-mono font-semibold">Phím A (Trái) / D (Phải)</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span>Điện thoại:</span>
+                            <span class="text-xs text-slate-400">Chạm & trượt tay qua lại ở vùng nửa trên màn hình</span>
+                        </div>
+                    </div>
+
+                    <div class="p-3 bg-slate-950/50 rounded-xl border border-slate-800">
+                        <h4 class="font-bold text-purple-400 mb-1">Luật chơi:</h4>
+                        <p class="text-xs leading-relaxed text-slate-400">Đón bóng bằng cách trượt bàn ngang. Để bóng lọt qua cạnh biên dọc của bạn thì đối thủ sẽ được điểm. Đạt <strong class="text-white">10 Điểm</strong> trước để chiến thắng!</p>
+                    </div>
+                </div>
+
+                <button id="closeHelpBtnOk" class="w-full mt-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 font-bold text-xs tracking-wider uppercase transition-all">ĐÃ HIỂU</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- SOUND SYNTHESIS ENGINE (WEB AUDIO API) ---
+        class SoundSynth {
+            constructor() {
+                this.ctx = null;
+                this.enabled = true;
+            }
+
+            init() {
+                // Khởi tạo AudioContext khi người dùng tương tác lần đầu
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (this.ctx && this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+
+            playTone(freq, type, duration, slideTo = 0) {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+
+                try {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+
+                    osc.type = type;
+                    osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                    
+                    // Tạo hiệu ứng tần số quét (slide) nếu có thiết lập
+                    if (slideTo > 0) {
+                        osc.frequency.exponentialRampToValueAtTime(slideTo, this.ctx.currentTime + duration);
+                    }
+
+                    gain.gain.setValueAtTime(0.12, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + duration);
+                } catch (e) {
+                    console.warn("Audio playback failed:", e);
+                }
+            }
+
+            playWall() {
+                this.playTone(150, 'triangle', 0.08);
+            }
+
+            playBounce() {
+                this.playTone(300, 'square', 0.1, 450);
+            }
+
+            playScore(isPlayer1) {
+                if (isPlayer1) {
+                    this.playTone(400, 'sine', 0.12, 600);
+                    setTimeout(() => this.playTone(600, 'sine', 0.15, 900), 100);
+                } else {
+                    this.playTone(400, 'sine', 0.12, 250);
+                    setTimeout(() => this.playTone(250, 'sine', 0.15, 150), 100);
+                }
+            }
+
+            playWin() {
+                const notes = [261.63, 329.63, 392.00, 523.25]; // C4, E4, G4, C5
+                notes.forEach((note, index) => {
+                    setTimeout(() => this.playTone(note, 'sine', 0.15), index * 120);
+                });
+            }
+
+            playLose() {
+                const notes = [392.00, 349.23, 311.13, 261.63]; // G4, F4, Eb4, C4
+                notes.forEach((note, index) => {
+                    setTimeout(() => this.playTone(note, 'sawtooth', 0.2), index * 150);
+                });
+            }
+        }
+
+        const audio = new SoundSynth();
+
+        // --- GAME CONSTANTS & STATE ---
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Layout Specs (Portrait mode ratio - Upscaled for larger viewport)
+        const VIRTUAL_WIDTH = 600;
+        const VIRTUAL_HEIGHT = 800;
+
+        let gameMode = 'single'; // 'single' (vs AI) or 'double' (2 players)
+        let aiDifficulty = 'medium'; // 'easy', 'medium', 'hard', 'extreme'
+        let isSpeedUpEnabled = true;
+
+        let isRunning = false;
+        let p1Score = 0;
+        let p2Score = 0;
+        const WINNING_SCORE = 10;
+
+        let screenShake = 0;
+        const keys = {};
+
+        // Ball objects
+        const ball = {
+            x: VIRTUAL_WIDTH / 2,
+            y: VIRTUAL_HEIGHT / 2,
+            radius: 11,
+            speed: 7,
+            dx: 4,
+            dy: 6,
+            baseSpeed: 7,
+            maxSpeed: 19,
+            trail: []
+        };
+
+        const ball2 = {
+            x: VIRTUAL_WIDTH / 3,
+            y: VIRTUAL_HEIGHT / 3,
+            radius: 11,
+            speed: 7,
+            dx: -4,
+            dy: -5,
+            baseSpeed: 7,
+            maxSpeed: 19,
+            trail: []
+        };
+
+        // Paddle Dimensions (Scaled up to match the larger game court)
+        const paddleWidth = 110;  // Width is horizontal (increased from 85)
+        const paddleHeight = 16; // Height is vertical thickness (increased from 14)
+
+        // Player 1 Paddle (Bottom)
+        const p1 = {
+            x: VIRTUAL_WIDTH / 2 - paddleWidth / 2,
+            y: VIRTUAL_HEIGHT - 30 - paddleHeight,
+            score: 0,
+            speed: 10
+        };
+
+        // Player 2 / AI Paddle (Top)
+        const p2 = {
+            x: VIRTUAL_WIDTH / 2 - paddleWidth / 2,
+            y: 30,
+            score: 0,
+            speed: 10
+        };
+
+        const p3 = {
+            x: VIRTUAL_WIDTH / 2 - paddleWidth / 2,
+            y: 44,
+            score: 0,
+            speed: 10
+        };
+
+        // AI profiles (Slightly tuned for wider field)
+        const difficultyConfig = {
+            easy: { speed: 5.5, reactionTime: 0.15, predictError: 45 },
+            medium: { speed: 8.0, reactionTime: 0.09, predictError: 25 },
+            hard: { speed: 10.5, reactionTime: 0.05, predictError: 10 },
+            extreme: { speed: 15.0, reactionTime: 0, predictError: 0 },
+            hell: { speed: 9.0, reactionTime: 0.03, predictError: 8 }
+        };
+
+        // Particles system
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.color = color;
+                this.size = Math.random() * 3 + 2;
+                this.vx = (Math.random() - 0.5) * 6;
+                this.vy = (Math.random() - 0.5) * 6;
+                this.life = 1;
+                this.decay = Math.random() * 0.03 + 0.02;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.life -= this.decay;
+            }
+
+            draw(gContext) {
+                gContext.save();
+                gContext.globalAlpha = this.life;
+                gContext.fillStyle = this.color;
+                gContext.beginPath();
+                gContext.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                gContext.fill();
+                gContext.restore();
+            }
+        }
+
+        let particles = [];
+
+        function createExplosion(x, y, color, count = 12) {
+            for (let i = 0; i < count; i++) {
+                particles.push(new Particle(x, y, color));
+            }
+        }
+
+        // --- RESPONSIVE CANVAS RESIZING ---
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            const containerWidth = container.clientWidth;
+            
+            const ratio = VIRTUAL_WIDTH / VIRTUAL_HEIGHT;
+            let targetWidth = containerWidth;
+            let targetHeight = containerWidth / ratio;
+
+            // Restrict maximum height allowing larger canvas coverage on screen
+            const maxHeight = window.innerHeight - 200; 
+            if (targetHeight > maxHeight) {
+                targetHeight = maxHeight;
+                targetWidth = targetHeight * ratio;
+            }
+
+            canvas.style.width = targetWidth + 'px';
+            canvas.style.height = targetHeight + 'px';
+            
+            canvas.width = VIRTUAL_WIDTH;
+            canvas.height = VIRTUAL_HEIGHT;
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        setTimeout(resizeCanvas, 100);
+
+        // --- INPUT EVENT LISTENERS ---
+        window.addEventListener('keydown', (e) => {
+            keys[e.code] = true;
+            // Block scrolling when using arrow keys
+            if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "KeyA", "KeyD"].includes(e.code)) {
+                e.preventDefault();
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            keys[e.code] = false;
+        });
+
+        // Touch input integration (Horizontal slides split by top/bottom zones)
+        function handleTouch(e) {
+            e.preventDefault();
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = VIRTUAL_WIDTH / rect.width;
+            const scaleY = VIRTUAL_HEIGHT / rect.height;
+
+            for (let i = 0; i < e.touches.length; i++) {
+                const touch = e.touches[i];
+                const touchX = (touch.clientX - rect.left) * scaleX;
+                const touchY = (touch.clientY - rect.top) * scaleY;
+
+                // Lower screen section -> Slider Bottom (P1)
+                if (touchY > VIRTUAL_HEIGHT / 2) {
+                    p1.x = touchX - paddleWidth / 2;
+                }
+                // Upper screen section -> Slider Top (P2) (Only works if double player mode active)
+                else if (touchY <= VIRTUAL_HEIGHT / 2 && gameMode === 'double') {
+                    p2.x = touchX - paddleWidth / 2;
+                }
+            }
+        }
+
+        canvas.addEventListener('touchstart', handleTouch, { passive: false });
+        canvas.addEventListener('touchmove', handleTouch, { passive: false });
+
+        // --- STREAMING_CHUNK: Setting serve coordinates and angles ---
+        // --- RESET AND SERVE LOGIC ---
+        function serveBall(directionY) {
+            ball.x = VIRTUAL_WIDTH / 2;
+            ball.y = VIRTUAL_HEIGHT / 2;
+            ball.speed = ball.baseSpeed;
+            
+            // Set initial direction towards player (up/down) with slight random horizontal deviation
+            const angleRange = (Math.random() - 0.5) * (Math.PI / 4);
+            
+            ball.dx = Math.sin(angleRange) * ball.speed;
+            ball.dy = Math.cos(angleRange) * ball.speed * directionY;
+            
+            ball.trail = [];
+
+            if (aiDifficulty === 'hell') {
+                serveBall2(-directionY);
+            }
+        }
+
+        function serveBall2(directionY) {
+            ball2.x = VIRTUAL_WIDTH / 2 + (Math.random() > 0.5 ? 60 : -60);
+            ball2.y = VIRTUAL_HEIGHT / 2 + (Math.random() > 0.5 ? 40 : -40);
+            ball2.speed = ball2.baseSpeed;
+
+            const angleRange = (Math.random() - 0.5) * (Math.PI / 3);
+            ball2.dx = Math.sin(angleRange) * ball2.speed;
+            ball2.dy = Math.cos(angleRange) * ball2.speed * directionY;
+
+            ball2.trail = [];
+        }
+
+        function resetScores() {
+            p1Score = 0;
+            p2Score = 0;
+            updateScoresUI();
+        }
+
+        function updateScoresUI() {
+            document.getElementById('p1Score').textContent = p1Score;
+            document.getElementById('p2Score').textContent = p2Score;
+        }
+
+        // --- STREAMING_CHUNK: Handling AI tracking on X-axis ---
+        // --- AI LOGIC (PLAYER 2 BOT - TOP PADDLE) ---
+        function updateAI() {
+            const config = difficultyConfig[aiDifficulty];
+            const paddleCenter = p2.x + paddleWidth / 2;
+            
+            let targetPosition = ball.x;
+            if (Math.random() > (1 - config.reactionTime)) {
+                targetPosition += (Math.random() - 0.5) * config.predictError;
+            }
+
+            if (paddleCenter < targetPosition - 8) {
+                p2.x += config.speed;
+            } else if (paddleCenter > targetPosition + 8) {
+                p2.x -= config.speed;
+            }
+
+            p2.x = Math.max(8, Math.min(VIRTUAL_WIDTH - paddleWidth - 8, p2.x));
+        }
+
+        function updateAI2() {
+            const config = difficultyConfig[aiDifficulty];
+            const paddleCenter = p3.x + paddleWidth / 2;
+            
+            let targetPosition = ball2.x;
+            if (Math.random() > (1 - config.reactionTime)) {
+                targetPosition += (Math.random() - 0.5) * config.predictError;
+            }
+
+            if (paddleCenter < targetPosition - 8) {
+                p3.x += config.speed;
+            } else if (paddleCenter > targetPosition + 8) {
+                p3.x -= config.speed;
+            }
+
+            p3.x = Math.max(8, Math.min(VIRTUAL_WIDTH - paddleWidth - 8, p3.x));
+        }
+
+        // --- STREAMING_CHUNK: Updating vertical physics loop ---
+        // --- PHYSICS & COLLISION UPDATES ---
+        function updatePhysics() {
+            const isHell = (aiDifficulty === 'hell');
+            const activeBalls = isHell ? [ball, ball2] : [ball];
+
+            // Reduce screen shake effect
+            if (screenShake > 0) screenShake -= 0.5;
+
+            // --- PADDLES KEYBOARD MOVEMENTS ---
+            if (keys['ArrowLeft']) p1.x -= p1.speed;
+            if (keys['ArrowRight']) p1.x += p1.speed;
+            p1.x = Math.max(8, Math.min(VIRTUAL_WIDTH - paddleWidth - 8, p1.x));
+
+            if (gameMode === 'double') {
+                if (keys['KeyA']) p2.x -= p2.speed;
+                if (keys['KeyD']) p2.x += p2.speed;
+                p2.x = Math.max(8, Math.min(VIRTUAL_WIDTH - paddleWidth - 8, p2.x));
+            } else {
+                updateAI();
+                if (isHell) updateAI2();
+            }
+
+            // Track if a goal happened this frame to prevent double goals
+            let goalThisFrame = false;
+
+            for (let bi = 0; bi < activeBalls.length; bi++) {
+                const b = activeBalls[bi];
+
+                // Trail updating
+                b.trail.push({ x: b.x, y: b.y });
+                if (b.trail.length > 8) b.trail.shift();
+
+                // Ball movement
+                b.x += b.dx;
+                b.y += b.dy;
+
+                // Side walls collisions
+                if (b.x - b.radius <= 0) {
+                    b.x = b.radius; b.dx = -b.dx;
+                    audio.playWall();
+                    createExplosion(b.x, b.y, '#f43f5e', 4);
+                    screenShake = 3;
+                } else if (b.x + b.radius >= VIRTUAL_WIDTH) {
+                    b.x = VIRTUAL_WIDTH - b.radius; b.dx = -b.dx;
+                    audio.playWall();
+                    createExplosion(b.x, b.y, '#f43f5e', 4);
+                    screenShake = 3;
+                }
+
+                // Bottom Paddle (P1) Collision
+                if (b.dy > 0 &&
+                    b.y + b.radius >= p1.y &&
+                    b.y - b.radius <= p1.y + paddleHeight &&
+                    b.x + b.radius >= p1.x &&
+                    b.x - b.radius <= p1.x + paddleWidth) {
+                    b.y = p1.y - b.radius;
+                    const relativeX = (b.x - (p1.x + paddleWidth / 2)) / (paddleWidth / 2);
+                    const bounceAngle = relativeX * (Math.PI / 3.5);
+                    if (isSpeedUpEnabled && b.speed < b.maxSpeed) b.speed += 0.5;
+                    b.dx = Math.sin(bounceAngle) * b.speed;
+                    b.dy = -Math.cos(bounceAngle) * b.speed;
+                    audio.playBounce();
+                    createExplosion(b.x, b.y, '#ec4899', 15);
+                    screenShake = 6;
+                }
+
+                // Top Paddle (P2) Collision
+                if (b.dy < 0 &&
+                    b.y - b.radius <= p2.y + paddleHeight &&
+                    b.y + b.radius >= p2.y &&
+                    b.x + b.radius >= p2.x &&
+                    b.x - b.radius <= p2.x + paddleWidth) {
+                    b.y = p2.y + paddleHeight + b.radius;
+                    const relativeX = (b.x - (p2.x + paddleWidth / 2)) / (paddleWidth / 2);
+                    const bounceAngle = relativeX * (Math.PI / 3.5);
+                    if (isSpeedUpEnabled && b.speed < b.maxSpeed) b.speed += 0.5;
+                    b.dx = Math.sin(bounceAngle) * b.speed;
+                    b.dy = Math.cos(bounceAngle) * b.speed;
+                    audio.playBounce();
+                    createExplosion(b.x, b.y, '#3b82f6', 15);
+                    screenShake = 6;
+                }
+
+                // Top Paddle (P3) Collision (only in hell mode)
+                if (isHell && b.dy < 0 &&
+                    b.y - b.radius <= p3.y + paddleHeight &&
+                    b.y + b.radius >= p3.y &&
+                    b.x + b.radius >= p3.x &&
+                    b.x - b.radius <= p3.x + paddleWidth) {
+                    b.y = p3.y + paddleHeight + b.radius;
+                    const relativeX = (b.x - (p3.x + paddleWidth / 2)) / (paddleWidth / 2);
+                    const bounceAngle = relativeX * (Math.PI / 3.5);
+                    if (isSpeedUpEnabled && b.speed < b.maxSpeed) b.speed += 0.5;
+                    b.dx = Math.sin(bounceAngle) * b.speed;
+                    b.dy = Math.cos(bounceAngle) * b.speed;
+                    audio.playBounce();
+                    createExplosion(b.x, b.y, '#ef4444', 15);
+                    screenShake = 6;
+                }
+
+                // --- SAFEGUARD: Prevent simultaneous goals ---
+                // If a goal already happened this frame for another ball, push this ball back
+                if (goalThisFrame) {
+                    if (b.y + b.radius > VIRTUAL_HEIGHT - 20) {
+                        b.y = VIRTUAL_HEIGHT - 60;
+                        b.dy = -Math.abs(b.dy);
+                    }
+                    if (b.y - b.radius < 20) {
+                        b.y = 60;
+                        b.dy = Math.abs(b.dy);
+                    }
+                }
+
+                // --- GOAL SCORING CHECKS ---
+                let scored = false;
+
+                if (b.y - b.radius < 0) {
+                    p1Score++;
+                    updateScoresUI();
+                    createExplosion(b.x, 25, '#ec4899', 25);
+                    audio.playScore(true);
+                    scored = true;
+                    goalThisFrame = true;
+                    if (p1Score >= WINNING_SCORE) { endGame(true); return; }
+                    if (!isHell) { serveBall(-1); } else { b.x = VIRTUAL_WIDTH / 2 + (Math.random() > 0.5 ? 50 : -50); b.y = VIRTUAL_HEIGHT / 2; b.speed = b.baseSpeed; const a = (Math.random() - 0.5) * (Math.PI / 4); b.dx = Math.sin(a) * b.speed; b.dy = -(Math.cos(a) * b.speed); b.trail = []; }
+                }
+
+                if (!scored && b.y + b.radius > VIRTUAL_HEIGHT) {
+                    p2Score++;
+                    updateScoresUI();
+                    createExplosion(b.x, VIRTUAL_HEIGHT - 25, '#ef4444', 25);
+                    audio.playScore(false);
+                    goalThisFrame = true;
+                    if (p2Score >= WINNING_SCORE) { endGame(false); return; }
+                    if (!isHell) { serveBall(1); } else { b.x = VIRTUAL_WIDTH / 2 + (Math.random() > 0.5 ? 50 : -50); b.y = VIRTUAL_HEIGHT / 2; b.speed = b.baseSpeed; const a = (Math.random() - 0.5) * (Math.PI / 4); b.dx = Math.sin(a) * b.speed; b.dy = Math.cos(a) * b.speed; b.trail = []; }
+                }
+            }
+
+            // Particle engine loop
+            for (let i = particles.length - 1; i >= 0; i--) {
+                particles[i].update();
+                if (particles[i].life <= 0) particles.splice(i, 1);
+            }
+        }
+
+        // --- STREAMING_CHUNK: Drawing canvas graphics and neon elements ---
+        // --- DRAWING CANVAS ELEMENTS ---
+        function drawGame() {
+            const isHell = (aiDifficulty === 'hell');
+
+            ctx.save();
+            if (screenShake > 0) {
+                const dx = (Math.random() - 0.5) * screenShake;
+                const dy = (Math.random() - 0.5) * screenShake;
+                ctx.translate(dx, dy);
+            }
+
+            // Background canvas clearing
+            ctx.fillStyle = isHell ? '#0a0000' : '#020205';
+            ctx.fillRect(0, 0, VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
+
+            // Draw grid backdrop lines
+            ctx.strokeStyle = isHell ? 'rgba(255, 0, 0, 0.04)' : 'rgba(255, 255, 255, 0.025)';
+            ctx.lineWidth = 1;
+            const gridSize = 40;
+            for (let x = 0; x < VIRTUAL_WIDTH; x += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, VIRTUAL_HEIGHT);
+                ctx.stroke();
+            }
+            for (let y = 0; y < VIRTUAL_HEIGHT; y += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(VIRTUAL_WIDTH, y);
+                ctx.stroke();
+            }
+
+            // Center dividing neon line
+            ctx.strokeStyle = isHell ? 'rgba(239, 68, 68, 0.3)' : 'rgba(168, 85, 247, 0.25)';
+            ctx.lineWidth = 4;
+            ctx.setLineDash([12, 10]);
+            ctx.beginPath();
+            ctx.moveTo(0, VIRTUAL_HEIGHT / 2);
+            ctx.lineTo(VIRTUAL_WIDTH, VIRTUAL_HEIGHT / 2);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Draw particles
+            particles.forEach(p => p.draw(ctx));
+
+            const activeBalls = isHell ? [ball, ball2] : [ball];
+            const ballColors = ['#ec4899', '#ef4444'];
+
+            for (let bi = 0; bi < activeBalls.length; bi++) {
+                const b = activeBalls[bi];
+                const color = ballColors[bi] || '#ec4899';
+
+                // Draw trailing streak
+                if (b.trail.length > 1) {
+                    for (let i = 0; i < b.trail.length - 1; i++) {
+                        const ratio = i / b.trail.length;
+                        ctx.beginPath();
+                        ctx.arc(b.trail[i].x, b.trail[i].y, b.radius * ratio, 0, Math.PI * 2);
+                        ctx.fillStyle = `rgba(${bi === 1 ? '239, 68, 68' : '236, 72, 153'}, ${ratio * 0.35})`;
+                        ctx.fill();
+                    }
+                }
+
+                // Draw glowing Ball
+                ctx.save();
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = color;
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+
+            // Draw Player 1 Bottom Paddle (Pink Neon)
+            ctx.save();
+            ctx.shadowBlur = 12;
+            ctx.shadowColor = '#ec4899';
+            ctx.fillStyle = '#ec4899';
+            ctx.beginPath();
+            if (ctx.roundRect) {
+                ctx.roundRect(p1.x, p1.y, paddleWidth, paddleHeight, 5);
+            } else {
+                ctx.rect(p1.x, p1.y, paddleWidth, paddleHeight);
+            }
+            ctx.fill();
+            ctx.restore();
+
+            // Draw Player 2 Top Paddle (Blue Neon)
+            ctx.save();
+            ctx.shadowBlur = 12;
+            ctx.shadowColor = isHell ? '#ef4444' : '#3b82f6';
+            ctx.fillStyle = isHell ? '#ef4444' : '#3b82f6';
+            ctx.beginPath();
+            if (ctx.roundRect) {
+                ctx.roundRect(p2.x, p2.y, paddleWidth, paddleHeight, 5);
+            } else {
+                ctx.rect(p2.x, p2.y, paddleWidth, paddleHeight);
+            }
+            ctx.fill();
+            ctx.restore();
+
+            // Draw Player 3 AI Paddle (Red - hell mode only)
+            if (isHell) {
+                ctx.save();
+                ctx.shadowBlur = 12;
+                ctx.shadowColor = '#ef4444';
+                ctx.fillStyle = '#ef4444';
+                ctx.beginPath();
+                if (ctx.roundRect) {
+                    ctx.roundRect(p3.x, p3.y, paddleWidth, paddleHeight, 5);
+                } else {
+                    ctx.rect(p3.x, p3.y, paddleWidth, paddleHeight);
+                }
+                ctx.fill();
+                ctx.restore();
+            }
+
+            ctx.restore();
+        }
+
+        // --- STREAMING_CHUNK: Managing main engine loops ---
+        // --- MAIN GAME LOOP ---
+        function loop() {
+            if (!isRunning) return;
+
+            updatePhysics();
+            drawGame();
+
+            requestAnimationFrame(loop);
+        }
+
+        // --- GAME CONTROL INTERFACES ---
+        const overlay = document.getElementById('gameOverlay');
+        const overlayTitle = document.getElementById('overlayTitle');
+        const overlayMsg = document.getElementById('overlayMessage');
+        const overlayBtn = document.getElementById('overlayPlayBtn');
+        const startBtn = document.getElementById('startBtn');
+
+        function startGame() {
+            audio.init();
+            resetScores();
+            p2.x = VIRTUAL_WIDTH / 2 - paddleWidth / 2;
+            p3.x = VIRTUAL_WIDTH / 2 - paddleWidth / 2;
+            serveBall(Math.random() > 0.5 ? 1 : -1);
+            
+            overlay.classList.add('opacity-0');
+            setTimeout(() => {
+                overlay.style.display = 'none';
+            }, 300);
+
+            isRunning = true;
+            startBtn.innerHTML = '<i class="fa-solid fa-pause"></i> TẠM DỪNG';
+            loop();
+        }
+
+        function togglePause() {
+            if (isRunning) {
+                isRunning = false;
+                overlayTitle.textContent = "ĐÃ TẠM DỪNG";
+                overlayMsg.textContent = "Bạn có muốn tiếp tục trận đấu nghẹt thở này?";
+                overlayBtn.innerHTML = '<i class="fa-solid fa-play"></i> TIẾP TỤC CHƠI';
+                overlay.style.display = 'flex';
+                setTimeout(() => {
+                    overlay.classList.remove('opacity-0');
+                }, 10);
+                startBtn.innerHTML = '<i class="fa-solid fa-play"></i> TIẾP TỤC CHƠI';
+            } else {
+                overlay.classList.add('opacity-0');
+                setTimeout(() => {
+                    overlay.style.display = 'none';
+                }, 300);
+                isRunning = true;
+                startBtn.innerHTML = '<i class="fa-solid fa-pause"></i> TẠM DỪNG';
+                loop();
+            }
+        }
+
+        function endGame(isPlayer1Winner) {
+            isRunning = false;
+            let message = "";
+            
+            if (gameMode === 'single') {
+                if (aiDifficulty === 'hell') {
+                    if (isPlayer1Winner) {
+                        message = "BẠN LÀ HUYỀN THOẠI! Đánh bại cả 2 Ác Quỷ Địa Ngục!";
+                        audio.playWin();
+                        audio.playWin();
+                    } else {
+                        message = "Địa ngục quá khắc nghiệt... Hãy mạnh mẽ hơn để quay lại!";
+                        audio.playLose();
+                    }
+                } else if (isPlayer1Winner) {
+                    message = "Thần sầu! Bạn đã đánh sập mạch tính toán của AI!";
+                    audio.playWin();
+                } else {
+                    message = "AI đã lấn át rồi! Hãy luyện tập và phục thù sau nhé.";
+                    audio.playLose();
+                }
+            } else {
+                message = isPlayer1Winner ? "Người chơi 1 (Phía dưới) chiến thắng!" : "Người chơi 2 (Phía trên) chiến thắng!";
+                audio.playWin();
+            }
+
+            overlayTitle.textContent = "KẾT THÚC TRẬN";
+            overlayMsg.innerHTML = `<span class="text-white text-lg font-bold block mb-2">${p1Score} - ${p2Score}</span> ${message}`;
+            overlayBtn.innerHTML = '<i class="fa-solid fa-rotate-right"></i> ĐẤU LẠI NGAY';
+            overlay.style.display = 'flex';
+            setTimeout(() => {
+                overlay.classList.remove('opacity-0');
+            }, 10);
+            startBtn.innerHTML = '<i class="fa-solid fa-play"></i> BẮT ĐẦU CHƠI';
+        }
+
+        // --- STREAMING_CHUNK: Assigning event triggers and mode switch listeners ---
+        // --- BUTTON ACTION TRIGGERS ---
+        
+        const modeSingleBtn = document.getElementById('modeSingle');
+        const modeDoubleBtn = document.getElementById('modeDouble');
+        const diffSection = document.getElementById('difficultySection');
+        const p2Label = document.getElementById('p2Label');
+        const mobileP2Hint = document.getElementById('mobileP2Hint');
+
+        modeSingleBtn.addEventListener('click', () => {
+            gameMode = 'single';
+            modeSingleBtn.className = "flex items-center gap-2 px-3 py-2.5 rounded-xl border border-pink-500/50 bg-pink-500/10 text-pink-400 font-medium text-sm transition-all justify-center lg:justify-start";
+            modeDoubleBtn.className = "flex items-center gap-2 px-3 py-2.5 rounded-xl border border-slate-800 bg-slate-900 hover:bg-slate-900/50 text-slate-400 font-medium text-sm transition-all justify-center lg:justify-start";
+            diffSection.style.display = 'block';
+            p2Label.textContent = aiDifficulty === 'hell' ? "2 MÁY AI (ĐỊA NGỤC)" : "MÁY AI (TRÊN)";
+            mobileP2Hint.classList.add('hidden');
+            resetScores();
+        });
+
+        modeDoubleBtn.addEventListener('click', () => {
+            gameMode = 'double';
+            modeDoubleBtn.className = "flex items-center gap-2 px-3 py-2.5 rounded-xl border border-blue-500/50 bg-blue-500/10 text-blue-400 font-medium text-sm transition-all justify-center lg:justify-start";
+            modeSingleBtn.className = "flex items-center gap-2 px-3 py-2.5 rounded-xl border border-slate-800 bg-slate-900 hover:bg-slate-900/50 text-slate-400 font-medium text-sm transition-all justify-center lg:justify-start";
+            diffSection.style.display = 'none';
+            p2Label.textContent = "NGƯỜI CHƠI 2 (TRÊN)";
+            mobileP2Hint.classList.remove('hidden');
+            resetScores();
+        });
+
+        // Difficulty Buttons Setup
+        const diffButtons = document.querySelectorAll('.diff-btn');
+        diffButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                diffButtons.forEach(b => {
+                    b.className = "diff-btn px-2 py-2 rounded-lg text-xs font-semibold border border-slate-800 bg-slate-900 text-slate-400 transition-all";
+                });
+                aiDifficulty = btn.dataset.diff;
+                if (btn.dataset.diff === 'hell') {
+                    btn.className = "diff-btn px-2 py-2 rounded-lg text-xs font-semibold border-red-500/50 bg-red-500/10 text-red-400 transition-all";
+                    p2Label.textContent = "2 MÁY AI (ĐỊA NGỤC)";
+                } else {
+                    btn.className = "diff-btn px-2 py-2 rounded-lg text-xs font-semibold border-pink-500/50 bg-pink-500/10 text-pink-400 transition-all";
+                    p2Label.textContent = "MÁY AI (TRÊN)";
+                }
+            });
+        });
+
+        // Sound Toggle
+        const soundBtn = document.getElementById('soundBtn');
+        const soundIcon = document.getElementById('soundIcon');
+        soundBtn.addEventListener('click', () => {
+            audio.enabled = !audio.enabled;
+            if (audio.enabled) {
+                soundIcon.className = "fa-solid fa-volume-high";
+                soundBtn.className = "w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 hover:border-pink-500/50 flex items-center justify-center transition-colors text-slate-300 hover:text-pink-400";
+            } else {
+                soundIcon.className = "fa-solid fa-volume-xmark";
+                soundBtn.className = "w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center transition-colors text-slate-500";
+            }
+        });
+
+        // Speedup parameter
+        const speedCheck = document.getElementById('speedUpCheck');
+        speedCheck.addEventListener('change', () => {
+            isSpeedUpEnabled = speedCheck.checked;
+        });
+
+        // Play actions
+        startBtn.addEventListener('click', () => {
+            if (p1Score === 0 && p2Score === 0 && !isRunning) {
+                startGame();
+            } else {
+                togglePause();
+            }
+        });
+
+        overlayBtn.addEventListener('click', startGame);
+
+        document.getElementById('resetScoreBtn').addEventListener('click', () => {
+            resetScores();
+            createExplosion(VIRTUAL_WIDTH / 2, VIRTUAL_HEIGHT / 2, '#a855f7', 30);
+        });
+
+        // Guide Modals
+        const helpModal = document.getElementById('helpModal');
+        document.getElementById('helpBtn').addEventListener('click', () => {
+            helpModal.classList.remove('hidden');
+            helpModal.classList.add('flex');
+        });
+        const closeHelp = () => {
+            helpModal.classList.add('hidden');
+            helpModal.classList.remove('flex');
+        };
+        document.getElementById('closeHelpBtn').addEventListener('click', closeHelp);
+        document.getElementById('closeHelpBtnOk').addEventListener('click', closeHelp);
+
+        // Bootstrap load and setup
+        window.onload = function() {
+            resizeCanvas();
+            setTimeout(() => {
+                drawGame();
+            }, 200);
+        };
+    </script>
+</body>
+</html>
